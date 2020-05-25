@@ -1,0 +1,10 @@
+public interface Item {
+    int getNrPezzi();
+    void setNrPezzi(int pezzi);
+    String getName();
+    void setName(String name);
+    boolean isImported();
+    void setImported(boolean b);
+    float getPrice();
+    void setPrice(float price);
+}
