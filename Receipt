@@ -1,0 +1,137 @@
+
+import java.text.DecimalFormat;
+import java.text.Format;
+import java.util.*;
+
+public class Receipt {
+
+    private static final float ROUNDOFF=0.05f;
+    private static final Format FORMATTER = new DecimalFormat("0.00");
+    private ListItem listItem;
+    private SalesTax bsTax;
+    private SalesTax imDuty;
+    private String result = "";
+    private float totalTax = 0;
+    private float totalSum = 0;
+
+    public Receipt(SalesTax bsTax, SalesTax imDuty, ListItem listItem){
+        this.bsTax = bsTax;
+        this.imDuty = imDuty;
+        this.listItem = listItem;
+    }
+
+    public String calcola(Map<Item, String> itemStringMap){
+
+        for(Map.Entry<Item, String> itemStringEntry : itemStringMap.entrySet()){
+            String valore = itemStringEntry.getValue();
+            Item chiave = itemStringEntry.getKey();
+            float totalProd = chiave.getPrice();
+            if(chiave.isImported()){
+                totalProd +=  Math.ceil((chiave.getPrice() * imDuty.getRate())/ROUNDOFF)*ROUNDOFF;
+            }
+
+            boolean bool = false;
+            for(Item it : listItem.getList()){
+                String n = it.getName();
+                if(n.equals(chiave.getName()) || (n +"s").equals(chiave.getName()) )bool=true;
+            }
+
+            if(!bool){
+                totalProd += Math.ceil((chiave.getPrice() * bsTax.getRate())/ROUNDOFF)*ROUNDOFF;
+            }
+
+            totalTax += (totalProd - chiave.getPrice())*chiave.getNrPezzi();
+
+            totalSum += totalProd * chiave.getNrPezzi();
+
+            result += valore + FORMATTER.format(totalProd*chiave.getNrPezzi()) + "\n";
+        }
+
+        return result += "Sales Taxes: " + FORMATTER.format(totalTax) + "\n" + "Total: " + FORMATTER.format(totalSum);
+    }
+
+
+    public void util(String string){
+        Map<Item, String> itemStringMap = new LinkedHashMap<>();
+        String[] lines = string.split("\n");
+
+        for(String str : lines){
+
+            List<String> words = new ArrayList<>(Arrays.asList(str.split("\\s")));
+            int quantity = Integer.parseInt(words.get(0));
+            float price = Float.parseFloat(words.get(words.size()-1));
+
+            Item it = null;
+            boolean imported = false;
+            boolean boo = false;
+            boolean boo1 = false;
+            String name = "";
+
+            for(String w : words){
+                w = w.toLowerCase();
+
+                if(!boo){
+
+                    if(!boo1){
+                        for(Item item : listItem.getList()){
+                            if(item.getName().equals(w) || (item.getName() + "s").equals(w)){
+                                it = item;
+                                it.setPrice(price);
+                                it.setNrPezzi(quantity);
+                                boo = true;
+                            }
+                        }
+                    }
+
+
+                    if(!boo && !(w.equals(words.get(0)) || w.equals(words.get(words.size()-1)) || w.equals("imported") || w.equals("at") || w.equals("of") || w.equals("bottle") || w.equals("packet") || w.equals("box"))){
+                        name += name.equals("") ? w + " " : w;
+                        boo1 = true;
+                    }
+
+                }
+
+
+                if(w.equals("imported") || w.equals("import")){
+                    imported = true;
+                }
+            }
+
+            if(boo1){
+                it = new AnotherItem(name, false, quantity, price);
+            }
+            if(imported && it != null){it.setImported(true);}
+
+            str = str.replace(words.get(words.size()-1), "").replace(" at", ":").replace("box of imported", "imported box of");
+
+            itemStringMap.put(it, str);
+
+        }
+
+        System.out.println(calcola(itemStringMap));
+
+    }
+
+    public static void main(String[] args) {
+
+        Book book = new Book("book", false, 1, 0.0f);
+        Food chocolate = new Food("chocolate", false, 1, 0.0f);
+        MedProd medProd = new MedProd("headache pill", false, 1, 0.0f);
+        List<Item> itemNames = new ArrayList<>(Arrays.asList(book, chocolate, medProd));
+        BasicSale basicSale = new BasicSale(0.1f, itemNames);
+        ImportDuty importDuty = new ImportDuty(0.05f, new ArrayList<>());
+
+        String input = "1 imported bottle of perfume at 27.99\n" +
+                "1 bottle of perfume at 18.99\n" +
+                "1 packet of headache pills at 9.75\n" +
+                "3 box of imported chocolates at 11.25";
+
+        ListItem listItem = new ListItem(itemNames);
+
+        Receipt receipt = new Receipt(basicSale, importDuty, listItem);
+
+        receipt.util(input);
+
+    }
+
+}
