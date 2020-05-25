@@ -1,0 +1,19 @@
+import java.util.List;
+
+public class ListItem {
+
+
+    private List<Item> list;
+
+    public ListItem(List<Item> l){
+        list = l;
+    }
+
+    public List<Item> getList() {
+        return list;
+    }
+
+    public void setList(List<Item> list) {
+        this.list = list;
+    }
+}
