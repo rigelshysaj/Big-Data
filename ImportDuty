@@ -1,0 +1,29 @@
+import java.util.List;
+
+public class ImportDuty implements SalesTax {
+    private float rate;
+    private List<Item> itemsName;
+
+    public ImportDuty(float rate, List<Item> itemsName){
+        this.rate = rate;
+        this.itemsName = itemsName;
+    }
+
+    public void setRate(float rate) {
+        this.rate = rate;
+    }
+
+    @Override
+    public float getRate() {
+        return rate;
+    }
+
+    public void setItemsName(List<Item> itemsName) {
+        this.itemsName = itemsName;
+    }
+
+    @Override
+    public List<Item> getItemsName() {
+        return itemsName;
+    }
+}
